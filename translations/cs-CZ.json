@@ -62,7 +62,8 @@
     "select_your_server": "Vyberte svůj server",
     "add_server_to_get_started": "Přidejte server a můžete začít",
     "add_server": "Přidat server",
-    "change_server": "Změnit server"
+    "change_server": "Změnit server",
+    "swipe_for_options": "Swipe a server for options"
   },
   "save_account": {
     "title": "Uložit účet",
@@ -110,9 +111,17 @@
     "continue": "Pokračovat",
     "next_up": "Další nahoru",
     "continue_and_next_up": "Pokračovat ve sledování a Další v pořadí",
+    "recently_added": "Recently added",
     "recently_added_in": "Nedávno přidané v {{libraryName}}",
     "suggested_movies": "Navrhované filmy",
     "suggested_episodes": "Navrhované epizody",
+    "hero": {
+      "filter": "Filter",
+      "groups": "Groups",
+      "media": "Media",
+      "tv_shows": "TV shows",
+      "disable": "Disable hero"
+    },
     "intro": {
       "welcome_to_streamyfin": "Vítejte v Streamyfin",
       "a_free_and_open_source_client_for_jellyfin": "Volný a Open-Source klient pro Jellyfin.",
@@ -126,7 +135,9 @@
       "centralised_settings_plugin_description": "Nakonfigurujte nastavení centrálně na serveru Jellyfin. Klientská nastavení každého uživatele se synchronizují automaticky.",
       "done_button": "Hotovo",
       "go_to_settings_button": "Přejít do nastavení",
-      "read_more": "Číst více"
+      "read_more": "Číst více",
+      "crash_reports_title": "Help improve Streamyfin",
+      "crash_reports_description": "Streamyfin sends anonymous crash and error reports to the developers. No account data or server addresses are included. You can turn this off here or anytime in settings."
     },
     "settings": {
       "settings_title": "Nastavení",
@@ -159,6 +170,7 @@
         "hide_remote_session_button_hint": "Skryje tlačítko vzdálených relací v záhlaví domovské obrazovky.",
         "show_home_backdrop": "Dynamické pozadí domovské obrazovky",
         "show_hero_carousel": "Hlavní karusel",
+        "show_hero_carousel_hint": "Show the large swipeable carousel at the top of the home screen.",
         "show_series_poster_on_episode": "Zobrazovat plakát seriálu u epizod",
         "theme_music": "Znělka",
         "display_size": "Velikost zobrazení",
@@ -232,7 +244,8 @@
         "exoplayer_note": "ExoPlayer nepodporuje pokročilé stylování titulků ASS/SSA ani jejich vodorovné zarovnání. Pokud to potřebujete, přepněte na MPV.",
         "mpv_note": "MPV na TV v současnosti nepředává metadata HDR do zobrazovacího zařízení, takže obsah HDR10/HDR10+ je tónově mapován na SDR. Pro výstup HDR přepněte na ExoPlayer.",
         "native_tv": "Nativní přehrávač (experimentální)",
-        "native_tv_note": "Použije nový plně nativní přehrávač pro Apple TV. Vypněte jej, pokud narazíte na potíže s přehráváním, a vrátíte se k předchozímu přehrávači."
+        "native_tv_note": "Použije nový plně nativní přehrávač pro Apple TV. Vypněte jej, pokud narazíte na potíže s přehráváním, a vrátíte se k předchozímu přehrávači.",
+        "native_android_tv_note": "Use the new fully-native Android TV player. Turn it off to fall back to the previous player if you run into playback issues."
       },
       "buffer": {
         "title": "Nastavení bufferu",
@@ -373,6 +386,8 @@
         "wikidata_awards_hint": "Zobrazí Oscary a ocenění na stránkách filmů a seriálů. Toto zařízení se ptá přímo Wikidat, ne vašeho serveru Jellyfin.",
         "opensubtitles_enabled": "Hledat na OpenSubtitles",
         "opensubtitles_enabled_hint": "Umožní tomuto zařízení hledat titulky přímo na OpenSubtitles, když váš server Jellyfin nemá žádného poskytovatele titulků. Po vypnutí zůstane vyhledávání titulků na serveru a uložený API klíč zůstane nedotčen.",
+        "crash_reports": "Crash reports",
+        "crash_reports_hint": "Send anonymous crash and error reports to the Streamyfin developers via Sentry. Reports contain no account data; server addresses and tokens are removed before anything is sent.",
         "jellyseerr": {
           "server_url": "URL serveru",
           "server_url_hint": "Příklad: http(s)://your-host.url\n(přidat port, pokud je vyžadováno)",
@@ -380,11 +395,18 @@
           "password": "Heslo",
           "password_placeholder": "Zadejte heslo pro uživatele Jellyfin {{username}}",
           "login_button": "Přihlásit se",
+          "api_key": "API key",
+          "api_key_hint": "Alternative to the password: a Seerr admin API key connects you as your Jellyfin user directly. Requires a recent Seerr server.",
+          "api_key_placeholder": "Seerr API key",
+          "api_key_from_admin": "Your server admin provides the Seerr credentials — connect as {{username}} without a password.",
+          "connect_button": "Connect",
           "total_media_requests": "Celkem požadavků na média",
           "movie_quota_limit": "Limit kvóty filmu",
           "movie_quota_days": "Dny filmové kvóty",
           "tv_quota_limit": "Limit kvót pro TV",
           "tv_quota_days": "Telefonní kvóty Dny",
+          "auto_login_title": "Sign in automatically",
+          "auto_login_description": "Sign in to Seerr on launch using your Jellyfin password. The password is kept in the device's secure storage and removed when you log out.",
           "reset_jellyseerr_config_button": "Obnovit nastavení Seerr",
           "unlimited": "Bez omezení",
           "plus_n_more": "+{{n}} více",
@@ -575,7 +597,8 @@
     "movies": "Filmy",
     "loading": "Načítání...",
     "seeAll": "Zobrazit vše",
-    "close": "Zavřít"
+    "close": "Zavřít",
+    "something_went_wrong": "Something went wrong"
   },
   "search": {
     "search": "Hledat...",
@@ -700,6 +723,7 @@
     "an_error_occurred_while_playing_the_video": "Při přehrávání videa došlo k chybě. Zkontrolujte logy v nastavení.",
     "client_error": "Chyba klienta",
     "could_not_create_stream_for_chromecast": "Nelze vytvořit stream pro Chromecast",
+    "chromecast_playback_failed": "Chromecast could not play this stream",
     "message_from_server": "Zpráva od serveru: {{message}}",
     "next_episode": "Další epizoda",
     "continue_watching": "Pokračovat ve sledování",
@@ -733,6 +757,7 @@
     "search_failed": "Hledání selhalo",
     "no_subtitle_provider": "Na serveru není nastaven poskytovatel titulků",
     "no_subtitles_found": "Nebyly nalezeny žádné titulky",
+    "now_playing": "Now Playing",
     "subtitle_apply_failed": "Titulky se stáhly, ale nepodařilo se je použít",
     "add_opensubtitles_key_hint": "Přidejte v nastavení klíč API pro OpenSubtitles, aby bylo možné hledat z tohoto zařízení",
     "settings": "Nastavení",
@@ -802,8 +827,7 @@
     "resume_playback": "Pokračovat v přehrávání",
     "resume_playback_description": "Chcete pokračovat tam, kde jste skončili, nebo začít od začátku?",
     "play_from_start": "Přehrát od začátku",
-    "continue_from": "Pokračovat od {{time}}",
-    "no_data_available": "Nejsou dostupná žádná data"
+    "continue_from": "Pokračovat od {{time}}"
   },
   "live_tv": {
     "title": "Živé vysílání",
@@ -1075,5 +1099,34 @@
     "scan_with_phone": "Naskenujte aplikací Streamyfin v telefonu",
     "logging_in": "Přihlašování...",
     "logging_in_description": "Připojování k vašemu serveru"
+  },
+  "custom_headers": {
+    "title": "Custom headers",
+    "description": "Extra HTTP headers sent with every request to this server. Needed when it sits behind an access gateway such as Cloudflare Zero Trust or Pangolin.",
+    "advanced_title": "Advanced: custom headers",
+    "integration_description": "Which headers to send to this service. Reuse the Jellyfin headers when it sits behind the same gateway.",
+    "no_headers": "No headers configured",
+    "header_key": "Header name",
+    "header_value": "Header value",
+    "header_name_placeholder": "X-Api-Key",
+    "header_value_placeholder": "Value",
+    "add_preset": "Add preset",
+    "add_custom": "Add header",
+    "clear_headers": "Clear headers",
+    "presets_title": "Choose a preset",
+    "source_jellyfin": "Jellyfin",
+    "source_custom": "Custom",
+    "source_none": "None",
+    "using_jellyfin_headers": "Using the Jellyfin headers",
+    "no_jellyfin_headers": "No headers configured for Jellyfin",
+    "integration_none": "No custom headers are sent to this service.",
+    "security_note": "Header values are stored in the device keychain, not in the app's own storage.",
+    "done": "Done",
+    "show_value": "Show value",
+    "hide_value": "Hide value",
+    "enabled": "Enabled",
+    "header_count_one": "{{count}} header",
+    "header_count_other": "{{count}} headers",
+    "header_count": "{{count}} headers"
   }
 }

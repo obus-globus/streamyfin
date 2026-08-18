@@ -62,7 +62,8 @@
     "select_your_server": "Selecciona el teu servidor",
     "add_server_to_get_started": "Afegeix un servidor per començar",
     "add_server": "Afegeix un servidor",
-    "change_server": "Canvia de servidor"
+    "change_server": "Canvia de servidor",
+    "swipe_for_options": "Swipe a server for options"
   },
   "save_account": {
     "title": "Desa el compte",
@@ -110,9 +111,17 @@
     "continue": "Continua",
     "next_up": "A continuació",
     "continue_and_next_up": "Continua mirant i A continuació",
+    "recently_added": "Recently added",
     "recently_added_in": "Afegit recentment a {{libraryName}}",
     "suggested_movies": "Pel·lícules suggerides",
     "suggested_episodes": "Episodis suggerits",
+    "hero": {
+      "filter": "Filter",
+      "groups": "Groups",
+      "media": "Media",
+      "tv_shows": "TV shows",
+      "disable": "Disable hero"
+    },
     "intro": {
       "welcome_to_streamyfin": "Benvingut a Streamyfin",
       "a_free_and_open_source_client_for_jellyfin": "Un client gratuït i de codi obert per a Jellyfin.",
@@ -126,7 +135,9 @@
       "centralised_settings_plugin_description": "Configureu els ajustos de manera centralitzada al vostre servidor Jellyfin. Els ajustos de client de cada usuari se sincronitzen automàticament.",
       "done_button": "Fet",
       "go_to_settings_button": "Ves a la configuració",
-      "read_more": "Mostra més"
+      "read_more": "Mostra més",
+      "crash_reports_title": "Help improve Streamyfin",
+      "crash_reports_description": "Streamyfin sends anonymous crash and error reports to the developers. No account data or server addresses are included. You can turn this off here or anytime in settings."
     },
     "settings": {
       "settings_title": "Configuració",
@@ -159,6 +170,7 @@
         "hide_remote_session_button_hint": "Amaga el botó de sessions remotes de la capçalera d'inici.",
         "show_home_backdrop": "Fons dinàmic a l'inici",
         "show_hero_carousel": "Carrusel destacat",
+        "show_hero_carousel_hint": "Show the large swipeable carousel at the top of the home screen.",
         "show_series_poster_on_episode": "Mostra el pòster de la sèrie als episodis",
         "theme_music": "Música del tema",
         "display_size": "Mida de visualització",
@@ -232,7 +244,8 @@
         "exoplayer_note": "ExoPlayer no admet estils avançats de subtítols ASS/SSA ni l'alineació horitzontal de subtítols. Canvia a MPV si els necessites.",
         "mpv_note": "MPV a la TV actualment no transmet les metadades HDR a la pantalla, per la qual cosa el contingut HDR10/HDR10+ es converteix a SDR. Canvia a ExoPlayer per obtenir sortida HDR.",
         "native_tv": "Reproductor natiu (experimental)",
-        "native_tv_note": "Utilitza el nou reproductor d'Apple TV totalment natiu. Desactiva'l per tornar al reproductor anterior si tens problemes de reproducció."
+        "native_tv_note": "Utilitza el nou reproductor d'Apple TV totalment natiu. Desactiva'l per tornar al reproductor anterior si tens problemes de reproducció.",
+        "native_android_tv_note": "Use the new fully-native Android TV player. Turn it off to fall back to the previous player if you run into playback issues."
       },
       "buffer": {
         "title": "Configuració de la memòria intermèdia",
@@ -373,6 +386,8 @@
         "wikidata_awards_hint": "Mostra els Oscars i els premis a les pàgines de pel·lícules i sèries. Aquest dispositiu consulta Wikidata directament, no el teu servidor Jellyfin.",
         "opensubtitles_enabled": "Cerca a OpenSubtitles",
         "opensubtitles_enabled_hint": "Permet que aquest dispositiu cerqui directament a OpenSubtitles quan el teu servidor Jellyfin no té cap proveïdor de subtítols. Si ho desactives, les cerques de subtítols es mantenen al servidor i la clau API desada no es toca.",
+        "crash_reports": "Crash reports",
+        "crash_reports_hint": "Send anonymous crash and error reports to the Streamyfin developers via Sentry. Reports contain no account data; server addresses and tokens are removed before anything is sent.",
         "jellyseerr": {
           "server_url": "URL del servidor",
           "server_url_hint": "Exemple: http(s)://el-vostre-domini.url\n(afegiu el port si és necessari)",
@@ -380,11 +395,18 @@
           "password": "Contrasenya",
           "password_placeholder": "Introdueix la contrasenya per a l'usuari de Jellyfin {{username}}",
           "login_button": "Inicia sessió",
+          "api_key": "API key",
+          "api_key_hint": "Alternative to the password: a Seerr admin API key connects you as your Jellyfin user directly. Requires a recent Seerr server.",
+          "api_key_placeholder": "Seerr API key",
+          "api_key_from_admin": "Your server admin provides the Seerr credentials — connect as {{username}} without a password.",
+          "connect_button": "Connect",
           "total_media_requests": "Sol·licituds totals de contingut",
           "movie_quota_limit": "Límit de quota de pel·lícules",
           "movie_quota_days": "Dies de quota de pel·lícules",
           "tv_quota_limit": "Límit de quota de sèries",
           "tv_quota_days": "Dies de quota de sèries",
+          "auto_login_title": "Sign in automatically",
+          "auto_login_description": "Sign in to Seerr on launch using your Jellyfin password. The password is kept in the device's secure storage and removed when you log out.",
           "reset_jellyseerr_config_button": "Restalbeix la configuració de Jellyseerr",
           "unlimited": "Il·limitat",
           "plus_n_more": "+{{n}} més",
@@ -575,7 +597,8 @@
     "movies": "Pel·lícules",
     "loading": "S'està carregant...",
     "seeAll": "Mostra-ho tot",
-    "close": "Tanca"
+    "close": "Tanca",
+    "something_went_wrong": "Something went wrong"
   },
   "search": {
     "search": "Cerca...",
@@ -700,6 +723,7 @@
     "an_error_occurred_while_playing_the_video": "S'ha produït un error en reproduir el vídeo. Consulteu els registres a la configuració.",
     "client_error": "Error del client",
     "could_not_create_stream_for_chromecast": "No s'ha pogut crear un flux per a Chromecast",
+    "chromecast_playback_failed": "Chromecast could not play this stream",
     "message_from_server": "Missatge del servidor: {{message}}",
     "next_episode": "Episodi següent",
     "continue_watching": "Continuar veient",
@@ -733,6 +757,7 @@
     "search_failed": "La cerca ha fallat",
     "no_subtitle_provider": "No hi ha cap proveïdor de subtítols configurat al servidor",
     "no_subtitles_found": "No s'ha trobat cap subtítol",
+    "now_playing": "Now Playing",
     "subtitle_apply_failed": "El subtítol s'ha descarregat però no s'ha pogut aplicar",
     "add_opensubtitles_key_hint": "Afegeix la clau API d'OpenSubtitles a la configuració per cercar des d'aquest dispositiu",
     "settings": "Configuració",
@@ -802,8 +827,7 @@
     "resume_playback": "Reprèn la reproducció",
     "resume_playback_description": "Vols continuar on ho vas deixar o començar des del principi?",
     "play_from_start": "Reprodueix des del principi",
-    "continue_from": "Continua des de {{time}}",
-    "no_data_available": "No hi ha dades disponibles"
+    "continue_from": "Continua des de {{time}}"
   },
   "live_tv": {
     "title": "TV en directe",
@@ -1075,5 +1099,34 @@
     "scan_with_phone": "Escaneja amb l'aplicació Streamyfin del teu telèfon",
     "logging_in": "S'està iniciant la sessió...",
     "logging_in_description": "S'està connectant al teu servidor"
+  },
+  "custom_headers": {
+    "title": "Custom headers",
+    "description": "Extra HTTP headers sent with every request to this server. Needed when it sits behind an access gateway such as Cloudflare Zero Trust or Pangolin.",
+    "advanced_title": "Advanced: custom headers",
+    "integration_description": "Which headers to send to this service. Reuse the Jellyfin headers when it sits behind the same gateway.",
+    "no_headers": "No headers configured",
+    "header_key": "Header name",
+    "header_value": "Header value",
+    "header_name_placeholder": "X-Api-Key",
+    "header_value_placeholder": "Value",
+    "add_preset": "Add preset",
+    "add_custom": "Add header",
+    "clear_headers": "Clear headers",
+    "presets_title": "Choose a preset",
+    "source_jellyfin": "Jellyfin",
+    "source_custom": "Custom",
+    "source_none": "None",
+    "using_jellyfin_headers": "Using the Jellyfin headers",
+    "no_jellyfin_headers": "No headers configured for Jellyfin",
+    "integration_none": "No custom headers are sent to this service.",
+    "security_note": "Header values are stored in the device keychain, not in the app's own storage.",
+    "done": "Done",
+    "show_value": "Show value",
+    "hide_value": "Hide value",
+    "enabled": "Enabled",
+    "header_count_one": "{{count}} header",
+    "header_count_other": "{{count}} headers",
+    "header_count": "{{count}} headers"
   }
 }

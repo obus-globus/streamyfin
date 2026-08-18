@@ -62,7 +62,8 @@
     "select_your_server": "בחרו את השרת שלכם",
     "add_server_to_get_started": "הוסיפו שרת כדי להתחיל",
     "add_server": "הוספת שרת",
-    "change_server": "החלפת שרת"
+    "change_server": "החלפת שרת",
+    "swipe_for_options": "Swipe a server for options"
   },
   "save_account": {
     "title": "שמירת החשבון",
@@ -110,9 +111,17 @@
     "continue": "המשך",
     "next_up": "הבא בתור",
     "continue_and_next_up": "המשך צפייה והבא בתור",
+    "recently_added": "Recently added",
     "recently_added_in": "התווסף לאחרונה ב-{{libraryName}}",
     "suggested_movies": "סרטים מוצעים",
     "suggested_episodes": "פרקים מוצעים",
+    "hero": {
+      "filter": "Filter",
+      "groups": "Groups",
+      "media": "Media",
+      "tv_shows": "TV shows",
+      "disable": "Disable hero"
+    },
     "intro": {
       "welcome_to_streamyfin": "ברוך הבא ל-Streamyfin",
       "a_free_and_open_source_client_for_jellyfin": "קליינט חינמי ובקוד פתוח לשרתי Jellyfin.",
@@ -126,7 +135,9 @@
       "centralised_settings_plugin_description": "הגדר את ההגדרות באופן מרוכז בשרת ה-Jellyfin שלך. הגדרות הקליינט של כל משתמש מסונכרנות אוטומטית.",
       "done_button": "בוצע",
       "go_to_settings_button": "עבור להגדרות",
-      "read_more": "קרא עוד"
+      "read_more": "קרא עוד",
+      "crash_reports_title": "Help improve Streamyfin",
+      "crash_reports_description": "Streamyfin sends anonymous crash and error reports to the developers. No account data or server addresses are included. You can turn this off here or anytime in settings."
     },
     "settings": {
       "settings_title": "הגדרות",
@@ -159,6 +170,7 @@
         "hide_remote_session_button_hint": "מסתיר את כפתור ההפעלות המרוחקות בכותרת מסך הבית.",
         "show_home_backdrop": "רקע דינמי במסך הבית",
         "show_hero_carousel": "קרוסלה ראשית",
+        "show_hero_carousel_hint": "Show the large swipeable carousel at the top of the home screen.",
         "show_series_poster_on_episode": "הצגת פוסטר הסדרה בפרקים",
         "theme_music": "מוזיקת נושא",
         "display_size": "גודל תצוגה",
@@ -232,7 +244,8 @@
         "exoplayer_note": "ExoPlayer אינו תומך בעיצוב כתוביות מתקדם מסוג ASS/SSA או ביישור כתוביות אופקי. עבור ל-MPV אם אתה זקוק לכך.",
         "mpv_note": "MPV בטלוויזיה אינו מעביר כרגע נתוני מטא של HDR למסך, ולכן תוכן HDR10/HDR10+ מומר (tone-mapped) ל-SDR. עבור ל-ExoPlayer לפלט HDR.",
         "native_tv": "נגן מקורי (ניסיוני)",
-        "native_tv_note": "שימוש בנגן ה-Apple TV החדש והמקורי לחלוטין. כבו אותו כדי לחזור לנגן הקודם אם נתקלתם בבעיות ניגון."
+        "native_tv_note": "שימוש בנגן ה-Apple TV החדש והמקורי לחלוטין. כבו אותו כדי לחזור לנגן הקודם אם נתקלתם בבעיות ניגון.",
+        "native_android_tv_note": "Use the new fully-native Android TV player. Turn it off to fall back to the previous player if you run into playback issues."
       },
       "buffer": {
         "title": "הגדרות אגירה",
@@ -373,6 +386,8 @@
         "wikidata_awards_hint": "הצגת אוסקר ופרסים בדפי סרטים וסדרות. המכשיר הזה פונה ישירות ל-Wikidata, לא לשרת ה-Jellyfin שלכם.",
         "opensubtitles_enabled": "חיפוש ב-OpenSubtitles",
         "opensubtitles_enabled_hint": "מאפשר למכשיר הזה לחפש ישירות ב-OpenSubtitles כאשר לשרת ה-Jellyfin שלכם אין ספק כתוביות. כיבוי האפשרות משאיר את חיפושי הכתוביות בשרת ולא נוגע במפתח ה-API השמור.",
+        "crash_reports": "Crash reports",
+        "crash_reports_hint": "Send anonymous crash and error reports to the Streamyfin developers via Sentry. Reports contain no account data; server addresses and tokens are removed before anything is sent.",
         "jellyseerr": {
           "server_url": "כתובת ה-URL של השרת",
           "server_url_hint": "לדוגמא: http(s)://your-host.url\n(הוסף פורט במידת הצורך)",
@@ -380,11 +395,18 @@
           "password": "סיסמא",
           "password_placeholder": "הזן סיסמה של שרת ה-Jellyfin עבור המשתמש {{username}}",
           "login_button": "התחבר",
+          "api_key": "API key",
+          "api_key_hint": "Alternative to the password: a Seerr admin API key connects you as your Jellyfin user directly. Requires a recent Seerr server.",
+          "api_key_placeholder": "Seerr API key",
+          "api_key_from_admin": "Your server admin provides the Seerr credentials — connect as {{username}} without a password.",
+          "connect_button": "Connect",
           "total_media_requests": "כמות בקשות כוללת",
           "movie_quota_limit": "מכסת הסרטים הכוללת",
           "movie_quota_days": "מכסת הסרטים היומיים",
           "tv_quota_limit": "מכסת הסדרות הכוללת",
           "tv_quota_days": "מכסת הסדרות היומית",
+          "auto_login_title": "Sign in automatically",
+          "auto_login_description": "Sign in to Seerr on launch using your Jellyfin password. The password is kept in the device's secure storage and removed when you log out.",
           "reset_jellyseerr_config_button": "אפס הגדרות Seerr",
           "unlimited": "ללא הגבלה",
           "plus_n_more": "+{{n}} עוד",
@@ -575,7 +597,8 @@
     "movies": "סרטים",
     "loading": "טוען...",
     "seeAll": "הצג הכול",
-    "close": "סגירה"
+    "close": "סגירה",
+    "something_went_wrong": "Something went wrong"
   },
   "search": {
     "search": "חפש...",
@@ -700,6 +723,7 @@
     "an_error_occurred_while_playing_the_video": "קרתה תקלה במהלך הניגון של הקובץ. בדוק את הלוגים בהגדרות.",
     "client_error": "שגיאת לקוח",
     "could_not_create_stream_for_chromecast": "נכשל ביצירת זרם עבור Chromecast",
+    "chromecast_playback_failed": "Chromecast could not play this stream",
     "message_from_server": "הודעה מהשרת: {{message}}",
     "next_episode": "הפרק הבא",
     "continue_watching": "המשך לצפות",
@@ -733,6 +757,7 @@
     "search_failed": "החיפוש נכשל",
     "no_subtitle_provider": "לא מוגדר ספק כתוביות בשרת",
     "no_subtitles_found": "לא נמצאו כתוביות",
+    "now_playing": "Now Playing",
     "subtitle_apply_failed": "הכתובית הורדה אך לא ניתן היה להחיל אותה",
     "add_opensubtitles_key_hint": "הוסיפו מפתח API של OpenSubtitles בהגדרות כדי לחפש מהמכשיר הזה",
     "settings": "הגדרות",
@@ -802,8 +827,7 @@
     "resume_playback": "המשך ניגון",
     "resume_playback_description": "להמשיך מהמקום שבו הפסקתם או להתחיל מההתחלה?",
     "play_from_start": "ניגון מההתחלה",
-    "continue_from": "המשך מ-{{time}}",
-    "no_data_available": "אין נתונים זמינים"
+    "continue_from": "המשך מ-{{time}}"
   },
   "live_tv": {
     "title": "טלוויזיה בשידור חי",
@@ -1075,5 +1099,34 @@
     "scan_with_phone": "סרקו באמצעות אפליקציית Streamyfin בטלפון שלכם",
     "logging_in": "מתחבר...",
     "logging_in_description": "מתחבר לשרת שלכם"
+  },
+  "custom_headers": {
+    "title": "Custom headers",
+    "description": "Extra HTTP headers sent with every request to this server. Needed when it sits behind an access gateway such as Cloudflare Zero Trust or Pangolin.",
+    "advanced_title": "Advanced: custom headers",
+    "integration_description": "Which headers to send to this service. Reuse the Jellyfin headers when it sits behind the same gateway.",
+    "no_headers": "No headers configured",
+    "header_key": "Header name",
+    "header_value": "Header value",
+    "header_name_placeholder": "X-Api-Key",
+    "header_value_placeholder": "Value",
+    "add_preset": "Add preset",
+    "add_custom": "Add header",
+    "clear_headers": "Clear headers",
+    "presets_title": "Choose a preset",
+    "source_jellyfin": "Jellyfin",
+    "source_custom": "Custom",
+    "source_none": "None",
+    "using_jellyfin_headers": "Using the Jellyfin headers",
+    "no_jellyfin_headers": "No headers configured for Jellyfin",
+    "integration_none": "No custom headers are sent to this service.",
+    "security_note": "Header values are stored in the device keychain, not in the app's own storage.",
+    "done": "Done",
+    "show_value": "Show value",
+    "hide_value": "Hide value",
+    "enabled": "Enabled",
+    "header_count_one": "{{count}} header",
+    "header_count_other": "{{count}} headers",
+    "header_count": "{{count}} headers"
   }
 }
