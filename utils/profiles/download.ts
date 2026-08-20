@@ -10,36 +10,37 @@ import type {
 import { type AudioTranscodeModeType, generateDeviceProfile } from "./native";
 
 /**
- * Download-specific subtitle profiles.
- * These are more permissive than streaming profiles since we can embed subtitles.
+ * Download-specific subtitle profiles. Text subtitles are embedded as a soft track so
+ * they stay toggleable; image-based formats (PGS/VOBSUB/DVD) can't be embedded and are
+ * burned in.
  */
 const downloadSubtitleProfiles: SubtitleProfile[] = [
   // Official formats
-  { Format: "vtt", Method: "Encode" },
-  { Format: "webvtt", Method: "Encode" },
-  { Format: "srt", Method: "Encode" },
-  { Format: "subrip", Method: "Encode" },
-  { Format: "ttml", Method: "Encode" },
+  { Format: "vtt", Method: "Embed" },
+  { Format: "webvtt", Method: "Embed" },
+  { Format: "srt", Method: "Embed" },
+  { Format: "subrip", Method: "Embed" },
+  { Format: "ttml", Method: "Embed" },
   { Format: "dvdsub", Method: "Encode" },
-  { Format: "ass", Method: "Encode" },
+  { Format: "ass", Method: "Embed" },
   { Format: "idx", Method: "Encode" },
   { Format: "pgs", Method: "Encode" },
   { Format: "pgssub", Method: "Encode" },
-  { Format: "ssa", Method: "Encode" },
+  { Format: "ssa", Method: "Embed" },
   // Other formats
-  { Format: "microdvd", Method: "Encode" },
-  { Format: "mov_text", Method: "Encode" },
-  { Format: "mpl2", Method: "Encode" },
-  { Format: "pjs", Method: "Encode" },
-  { Format: "realtext", Method: "Encode" },
-  { Format: "scc", Method: "Encode" },
-  { Format: "smi", Method: "Encode" },
-  { Format: "stl", Method: "Encode" },
-  { Format: "sub", Method: "Encode" },
-  { Format: "subviewer", Method: "Encode" },
-  { Format: "teletext", Method: "Encode" },
-  { Format: "text", Method: "Encode" },
-  { Format: "vplayer", Method: "Encode" },
+  { Format: "microdvd", Method: "Embed" },
+  { Format: "mov_text", Method: "Embed" },
+  { Format: "mpl2", Method: "Embed" },
+  { Format: "pjs", Method: "Embed" },
+  { Format: "realtext", Method: "Embed" },
+  { Format: "scc", Method: "Embed" },
+  { Format: "smi", Method: "Embed" },
+  { Format: "stl", Method: "Embed" },
+  { Format: "sub", Method: "Embed" },
+  { Format: "subviewer", Method: "Embed" },
+  { Format: "teletext", Method: "Embed" },
+  { Format: "text", Method: "Embed" },
+  { Format: "vplayer", Method: "Embed" },
   { Format: "xsub", Method: "Encode" },
 ];
 
@@ -62,11 +63,14 @@ export const generateDownloadProfile = (
     MaxStreamingBitrate: 20_000_000,
     // Use download-specific subtitle profiles
     SubtitleProfiles: downloadSubtitleProfiles,
-    // Update transcoding profiles with download-specific settings
+    // Update transcoding profiles with download-specific settings. Transcode to a single
+    // MKV over HTTP (not HLS) so embedded subtitle tracks are carried into the download.
     TranscodingProfiles: baseProfile.TranscodingProfiles.map((profile) => {
       if (profile.Type === "Video") {
         return {
           ...profile,
+          Protocol: "http",
+          Container: "mkv",
           CopyTimestamps: false,
           EnableSubtitlesInManifest: true,
         };
