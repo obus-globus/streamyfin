@@ -5,10 +5,10 @@ import org.junit.Test
 
 class SubtitleFontTest {
     @Test
-    fun systemRestoresMpvDefaultInsteadOfClearingTheFont() {
-        // An empty sub-font drops mpv's default family altogether, so the
-        // "System" choice has to name that default explicitly.
-        assertEquals("sans-serif", mpvSubtitleFont("System"))
+    fun systemNamesAnInstalledFamilyInsteadOfAGenericOne() {
+        // libass has no fontconfig aliases on Android, so "sans-serif" is not a
+        // real family and fontselect settles on an arbitrary system font.
+        assertEquals("Roboto", mpvSubtitleFont("System"))
     }
 
     @Test

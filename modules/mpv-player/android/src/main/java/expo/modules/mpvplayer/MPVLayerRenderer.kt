@@ -29,13 +29,14 @@ internal fun normalizeVideoDimensions(width: Int, height: Int, rotation: Int): P
 }
 
 /**
- * mpv `sub-font` for a subtitle font setting. "System" names mpv's own default
- * rather than writing an empty family: an empty `sub-font` drops the default
- * and leaves libass to pick a face glyph by glyph.
+ * mpv `sub-font` for a subtitle font setting. "System" names a real family, not
+ * mpv's default "sans-serif" and not an empty string: libass runs without a
+ * fontconfig config on Android, so it has no alias for "sans-serif" and picks an
+ * arbitrary system font (MiClockTibetan-Thin on HyperOS, with no usable spaces),
+ * and an empty family leaves it to pick a face glyph by glyph.
  */
 internal fun mpvSubtitleFont(font: String): String = when (font) {
-    "System" -> "sans-serif"
-    "sans-serif" -> "Roboto"
+    "System", "sans-serif" -> "Roboto"
     "serif" -> "Noto Serif"
     "monospace" -> "Droid Sans Mono"
     "opendyslexic" -> "OpenDyslexic"
