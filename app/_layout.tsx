@@ -375,6 +375,8 @@ function Layout() {
       });
   }, [api, expoPushToken, user]);
 
+  const pushTokenRequested = useRef(false);
+
   const registerNotifications = useCallback(async () => {
     if (Platform.OS === "android") {
       await Notifications?.setNotificationChannelAsync("default", {
@@ -402,8 +404,11 @@ function Layout() {
       await registerBackgroundFetchAsyncSessions();
     }
 
-    // only create push token for real devices (pointless for emulators)
-    if (Device.isDevice) {
+    // only create push token for real devices (pointless for emulators). Asked
+    // once per launch: this runs again on every session change, and the token
+    // does not depend on the session.
+    if (Device.isDevice && !pushTokenRequested.current) {
+      pushTokenRequested.current = true;
       Notifications?.getExpoPushTokenAsync({
         projectId: "e79219d1-797f-4fbe-9fa1-cfd360690a68",
       })
