@@ -1,7 +1,6 @@
 package expo.modules.herocarousel
 
 import android.graphics.Bitmap
-import android.os.Build
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -62,8 +61,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
@@ -107,15 +104,7 @@ private object HeroLayout {
   /** Vertical space reserved under the cards for the page dots. */
   val DotsArea = 24.dp
   val CardElevation = 12.dp
-  val PanelBlur = 24.dp
 }
-
-/**
- * `Modifier.blur` is a no-op below Android 12, so the glass panel falls back
- * to a heavier flat tint there instead of drawing an unblurred copy of the
- * backdrop behind its own text.
- */
-private val BlurSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 private val PlaceholderBrush = Brush.linearGradient(
   listOf(Color(0xFF292929), Color(0xFF1A1A1A))
@@ -305,6 +294,9 @@ private fun HeroCard(
   )
   val parallaxPx = with(LocalDensity.current) { HeroLayout.Parallax.toPx() }
   val backdrop = rememberHeroImage(item.backdropUrl, headers)
+  val blurredBackdrop = remember(backdrop) {
+    if (backdrop == null) null else item.backdropUrl?.let(HeroImageLoader::blurred)?.asImageBitmap()
+  }
 
   Box(
     Modifier
@@ -342,7 +334,7 @@ private fun HeroCard(
       HeroInfoPanel(
         item = item,
         headers = headers,
-        backdrop = backdrop,
+        blurredBackdrop = blurredBackdrop,
         cardWidth = cardWidth,
         cardHeight = cardHeight,
         parallaxPx = parallaxPx,
@@ -446,7 +438,7 @@ private fun sfSymbolIcon(name: String?): ImageVector? = when (name) {
 private fun HeroInfoPanel(
   item: HeroItem,
   headers: Map<String, String>,
-  backdrop: ImageBitmap?,
+  blurredBackdrop: ImageBitmap?,
   cardWidth: Dp,
   cardHeight: Dp,
   parallaxPx: Float,
@@ -459,31 +451,29 @@ private fun HeroInfoPanel(
       .clip(shape)
       .border(1.dp, Color.White.copy(alpha = 0.1f), shape)
   ) {
-    if (BlurSupported) {
-      // SwiftUI's `.ultraThinMaterial` samples whatever is behind it; Compose
-      // has no such material, so the panel re-draws the card art blurred.
-      // The wrapper takes the panel's size (`matchParentSize` keeps it out of
-      // the measure pass) and the copy is pinned by the card's bottom-left
-      // corner — 12dp out and 12dp down from the panel's — so the blur lines
-      // up with the art it is standing on, parallax included.
-      Box(Modifier.matchParentSize()) {
-        HeroBackdrop(
-          image = backdrop,
-          cardWidth = cardWidth,
-          cardHeight = cardHeight,
-          parallaxPx = parallaxPx,
-          pageOffset = pageOffset,
-          modifier = Modifier
-            .align(Alignment.BottomStart)
-            .offset(x = -HeroLayout.CardPadding, y = HeroLayout.CardPadding)
-            .blur(HeroLayout.PanelBlur, BlurredEdgeTreatment.Unbounded)
-        )
-      }
+    // SwiftUI's `.ultraThinMaterial` samples whatever is behind it; Compose has
+    // no such material, so the panel re-draws the card art from a tiny copy
+    // scaled up (see HeroImageLoader.blurred).
+    // The wrapper takes the panel's size (`matchParentSize` keeps it out of
+    // the measure pass) and the copy is pinned by the card's bottom-left
+    // corner — 12dp out and 12dp down from the panel's — so the blur lines
+    // up with the art it is standing on, parallax included.
+    Box(Modifier.matchParentSize()) {
+      HeroBackdrop(
+        image = blurredBackdrop,
+        cardWidth = cardWidth,
+        cardHeight = cardHeight,
+        parallaxPx = parallaxPx,
+        pageOffset = pageOffset,
+        modifier = Modifier
+          .align(Alignment.BottomStart)
+          .offset(x = -HeroLayout.CardPadding, y = HeroLayout.CardPadding)
+      )
     }
     Box(
       Modifier
         .matchParentSize()
-        .background(Color.Black.copy(alpha = if (BlurSupported) 0.38f else 0.62f))
+        .background(Color.Black.copy(alpha = 0.38f))
     )
     Box(Modifier.matchParentSize().background(PanelSheenBrush))
 

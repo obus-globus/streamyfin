@@ -1,5 +1,6 @@
 package expo.modules.herocarousel
 
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.LruCache
@@ -35,6 +36,13 @@ internal object HeroImageLoader {
     override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
   }
 
+  private const val BLUR_WIDTH = 64
+  private const val MAX_BLUR_CACHE_BYTES = 1024 * 1024
+
+  private val blurCache = object : LruCache<String, Bitmap>(MAX_BLUR_CACHE_BYTES) {
+    override fun sizeOf(key: String, value: Bitmap): Int = value.byteCount
+  }
+
   private val inflight = ConcurrentHashMap<String, Deferred<Bitmap?>>()
 
   fun cached(url: String): Bitmap? = cache.get(url)
@@ -58,6 +66,36 @@ internal object HeroImageLoader {
     return deferred.await()
   }
 
+  /**
+   * A very small copy of a cached image for the glass panel: drawn scaled up, it
+   * reads as a blur with no per-frame cost, unlike `Modifier.blur`, which makes
+   * the RenderThread re-run a blur shader on an offscreen layer every frame.
+   * Halved step by step because one large bilinear step skips most source pixels
+   * and comes out speckled.
+   */
+  fun blurred(url: String): Bitmap? {
+    blurCache.get(url)?.let { return it }
+    var small = cache.get(url) ?: return null
+    while (small.width > BLUR_WIDTH && small.height > 1) {
+      small = Bitmap.createScaledBitmap(small, small.width / 2, small.height / 2, true)
+    }
+    blurCache.put(url, small)
+    return small
+  }
+
+  /** Decodes at no more than twice the screen width instead of the server's full size. */
+  private fun decodeForDisplay(bytes: ByteArray): Bitmap? {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+    val screenWidth = Resources.getSystem().displayMetrics.widthPixels
+    var sampleSize = 1
+    while (bounds.outWidth / (sampleSize * 2) >= screenWidth) {
+      sampleSize *= 2
+    }
+    val options = BitmapFactory.Options().apply { inSampleSize = sampleSize }
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+  }
+
   private fun fetch(url: String, headers: Map<String, String>): Bitmap? {
     return try {
       val connection = (URL(url).openConnection() as HttpURLConnection).apply {
@@ -71,7 +109,7 @@ internal object HeroImageLoader {
         if (connection.responseCode !in 200..299) {
           return null
         }
-        connection.inputStream.use { BitmapFactory.decodeStream(it) }
+        decodeForDisplay(connection.inputStream.use { it.readBytes() })
           ?.also { cache.put(url, it) }
       } finally {
         connection.disconnect()
