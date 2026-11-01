@@ -130,7 +130,9 @@
               }
             },
             "useAndroidX": true,
-            "enableJetifier": true
+            "enableJetifier": true,
+            "enableMinifyInReleaseBuilds": true,
+            "extraProguardRules": "-keep class expo.modules.** { *; }\n-keep class com.doublesymmetry.trackplayer.** { *; }\n-keep class com.reactnative.googlecast.** { *; }\n-keep class com.margelo.nitro.** { *; }\n-keep class com.reactnativevolumemanager.** { *; }\n-keep class com.tradle.react.** { *; }\n-keep class com.swmansion.** { *; }\n-keep class com.rcttabview.** { *; }\n-keep class dev.jdtech.mpv.** { *; }\n-keepnames class * extends java.lang.Throwable\n"
           }
         }
       ],
