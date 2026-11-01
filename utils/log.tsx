@@ -1,8 +1,6 @@
 import * as Sentry from "@sentry/react-native";
 import { useQuery } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
-import type React from "react";
-import { createContext, useContext } from "react";
 import { MAX_SESSION_REPORT_KEYS } from "@/constants/Sentry";
 import {
   describeHttpError,
@@ -25,25 +23,6 @@ const SENTRY_BREADCRUMB_LEVELS: Record<LogLevel, Sentry.SeverityLevel> = {
   ERROR: "error",
   DEBUG: "debug",
 };
-
-const LogContext = createContext<ReturnType<typeof useLogProvider> | null>(
-  null,
-);
-const _DownloadContext = createContext<ReturnType<
-  typeof useLogProvider
-> | null>(null);
-
-function useLogProvider() {
-  const { data: logs } = useQuery({
-    queryKey: ["logs"],
-    queryFn: async () => readFromLog(),
-    refetchInterval: 1000,
-  });
-
-  return {
-    logs,
-  };
-}
 
 // Mirror app logs into Sentry as breadcrumbs so crash reports carry the log
 // trail leading up to them. `data` stays local: it can hold raw URLs and
@@ -227,16 +206,19 @@ export const writeDebugLog = (message: string, data?: any) => {
   }
 };
 
+/**
+ * The live log, for the screen that shows it. Polls only while that screen is
+ * mounted: every refetch is a query cache update, and each update makes the
+ * persister serialize the whole cache on the JS thread. `gcTime: 0` keeps the
+ * log out of the persisted cache altogether (see utils/queryPersistence.ts).
+ */
 export function useLog() {
-  const context = useContext(LogContext);
-  if (context === null) {
-    throw new Error("useLog must be used within a LogProvider");
-  }
-  return context;
-}
+  const { data: logs } = useQuery({
+    queryKey: ["logs"],
+    queryFn: async () => readFromLog(),
+    refetchInterval: 1000,
+    gcTime: 0,
+  });
 
-export function LogProvider({ children }: { children: React.ReactNode }) {
-  const provider = useLogProvider();
-
-  return <LogContext.Provider value={provider}>{children}</LogContext.Provider>;
+  return { logs };
 }

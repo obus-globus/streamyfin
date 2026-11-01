@@ -33,7 +33,6 @@ jest.mock("@/utils/log", () => ({
   writeDebugLog: () => undefined,
   readFromLog: () => [],
   useLog: () => ({ logs: [], clearLogs: () => undefined }),
-  LogProvider: ({ children }: { children: unknown }) => children,
   default: jest.requireActual("jotai").atom([]),
 }));
 

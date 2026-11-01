@@ -41,12 +41,7 @@ import {
   registerBackgroundFetchAsyncSessions,
 } from "@/utils/background-tasks";
 import { getOrSetDeviceId } from "@/utils/device";
-import {
-  LogProvider,
-  writeErrorLog,
-  writeInfoLog,
-  writeToLog,
-} from "@/utils/log";
+import { writeErrorLog, writeInfoLog, writeToLog } from "@/utils/log";
 import { storage } from "@/utils/mmkv";
 import { notificationRoute } from "@/utils/notificationRoute";
 import { pushRegistrationStep } from "@/utils/pushRegistration";
@@ -480,7 +475,6 @@ function Layout() {
             <ServerUrlProvider>
               <NetworkStatusProvider>
                 <PlaySettingsProvider>
-                  <LogProvider>
                     <WebSocketProvider>
                       <DownloadProvider>
                         <NativePlayerProvider>
@@ -625,7 +619,6 @@ function Layout() {
                         </NativePlayerProvider>
                       </DownloadProvider>
                     </WebSocketProvider>
-                  </LogProvider>
                 </PlaySettingsProvider>
               </NetworkStatusProvider>
             </ServerUrlProvider>
