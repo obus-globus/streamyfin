@@ -37,6 +37,7 @@ export interface MigrationStorage {
   getAllKeys: () => string[];
   set: (key: string, value: boolean | number | string) => void;
   remove: (key: string) => void;
+  trim?: () => void;
 }
 
 interface Migration {
@@ -103,6 +104,14 @@ const MIGRATIONS: Migration[] = [
       } else {
         store.set(LOGS_STORAGE_KEY, capped);
       }
+    },
+  },
+  {
+    version: 6,
+    description:
+      "shrink the storage file, which MMKV keeps mapped in memory and never shrinks by itself, after the oversized log and query cache are gone",
+    run: (store) => {
+      store.trim?.();
     },
   },
 ];

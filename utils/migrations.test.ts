@@ -54,6 +54,16 @@ describe("runStorageMigrations", () => {
     expect(version()).toBe(LATEST_SCHEMA_VERSION);
   });
 
+  test("trims the store for an existing install", () => {
+    data.set("token", "abc");
+    const trim = jest.fn();
+
+    runStorageMigrations({ ...store, trim });
+
+    expect(trim).toHaveBeenCalledTimes(1);
+    expect(data.get("token")).toBe("abc");
+  });
+
   test("logs a migration that throws and leaves it pending", () => {
     data.set("token", "abc");
     const failing = {
