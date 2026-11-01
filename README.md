@@ -1,280 +1,195 @@
-<a href="https://www.buymeacoffee.com/fredrikbur3" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+# Streamyfin: Android performance fork
 
+An unofficial fork of [Streamyfin](https://github.com/streamyfin/streamyfin), the Jellyfin client by [Fredrik Burmester](https://github.com/fredrikburmester) and contributors. It isn't affiliated with or supported by the Streamyfin project, so please don't report problems with this fork upstream. For the app itself and its documentation, see the [original project](https://github.com/streamyfin/streamyfin).
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/streamyfin/.github/refs/heads/main/streamyfin-github-banner.png" alt="Streamyfin" width="100%">
-</p>
+This branch is `v0.55.2` plus fixes for Android performance and subtitle problems, built for personal use. No builds are published, and these changes haven't been submitted upstream. The notes below record each issue so upstream reports can be written later.
 
-<p align="center">
-  <a href="https://discord.gg/aJvAYeycyY"><img alt="Streamyfin Discord" src="https://img.shields.io/badge/Discord-Streamyfin-blue?style=flat-square&logo=discord"></a><a href="https://www.reddit.com/r/streamyfin/"><img alt="Streamyfin Reddit" src="https://img.shields.io/badge/Reddit-r--streamyfin-FF4500?style=flat-square&logo=reddit"></a>
-</p>
+Everything was tested on one device: a Redmi Note 11 Pro 5G (Snapdragon 695, 5.5 GB RAM, Android 13 / HyperOS, 120 Hz), on 2026-11-01. Upstream was searched that day, and `develop` was checked at `284d5527f` (2026-10-29). Results on other devices may differ.
 
-**Streamyfin is a user-friendly Jellyfin video streaming client built with Expo. Designed as an alternative to other Jellyfin clients, it aims to offer a smooth and reliable streaming experience. We hope you'll find it a valuable addition to your media streaming toolbox.**
+Licensed under the [Mozilla Public License 2.0](LICENSE.txt), like the original.
 
----
+## Results
 
-<p align="center">
-  <img src="./assets/images/screenshots/screenshot1.png" width="20%" alt="Movie page for The Lord of the Rings: The Fellowship of the Ring, with its play button and media details">
-  &nbsp;
-  <img src="./assets/images/screenshots/screenshot3.png" width="20%" alt="Movie page for Wonka with the bitrate menu open">
-  &nbsp;
-  <img src="./assets/images/screenshots/screenshot2.png" width="20%" alt="Downloads screen with a movie downloading">
-  &nbsp;
-  <img src="./assets/images/seerr.png" width="21%" alt="Seerr page for Family Guy, with the request button and a request button on each season">
-</p>
+Compared with official 0.55.2, on the same phone and server.
 
+| Measurement | Official | This fork |
+|---|---|---|
+| JS thread when idle | 75–85% of a core | about 0% |
+| Native heap when idle | 760–800 MB | about 145 MB |
+| Total app memory (PSS) when idle | about 1.34 GB | 0.47–0.49 GB |
+| Total app memory after browsing | about 1.27 GB | about 0.57 GB |
+| Cold start, excluding the first after install | 2.5–3.8 s | about 1.6 s |
+| CPU during playback, all threads (800% = all cores) | 151% | 95% |
+| Tab switch, median tap to first change (6 taps) | 394 ms | 283 ms |
+| Slowest of those tab switches | 1191 ms | 405 ms |
+| Hero carousel, median frame | 27 ms | 13 ms |
+| Hero carousel, janky frames | 78% | 6–7% |
+| Library grid, median frame, `verify` to `speed` (same build) | 17 ms | 12 ms |
+| Code in the APK (dex) | 85 MB | about 28 MB |
 
-## 🌟 Features
+- The memory and log results depend heavily on one install's data: its log had grown to 26.8 MB (#2). A new install wouldn't start from that state, though the polling in #1 affects every install.
+- Tab timings include about 250 ms from the test setup (screen recording), and were measured before #10–#12. A native Settings row measured 254 ms the same way.
+- Janky-frame percentages vary widely between runs. Median frame time and missed vsyncs are more reliable.
+- Compare builds in the same compile state (#12), since it changes the results a lot.
 
-- 🚀 **Skip Intro / Credits Support**: Lets you quickly skip intros and credits during playback
-- 🖼️ **Trickplay images**: The new golden standard for chapter previews when seeking
-- 📥 **Download media**: Save your media locally and watch it offline
-- ⚙️ **Settings management**: Manage app configurations for all users through our plugin
-- 🤖 **Seerr (formerly Jellyseerr) integration**: Request media directly in the app
-- 👁️ **Sessions view:** View all active sessions currently streaming on your server
-- 📡 **Chromecast**: Cast your media to any Chromecast-enabled device
-- 🔐 **Custom auth headers**: Reach servers behind an access gateway such as Cloudflare Zero Trust or Pangolin ([docs](./docs/custom-headers.md))
+## Fixed
 
-## 🧪 Experimental Features
+### 1. Root log query polls every second and rewrites the whole query cache
 
-Streamyfin offers exciting experimental features such as media downloading and Chromecast support. These features are under active development, and your feedback and patience help us make them even better.
+**Upstream:** no report or PR found. Still present on `develop`. Possibly a cause of the open [#379](https://github.com/streamyfin/streamyfin/issues/379) ("Extreme UI lag", Android), since the code dates from December 2024, a month before that report, and it describes the app slowing down over time. Not confirmed.
 
-### 📥 Downloading
+**Cause:** `LogProvider` wraps the whole app and runs `useQuery({ queryKey: ["logs"], refetchInterval: 1000 })`. Each second this parses the stored log. Each result updates the query cache, and `PersistQueryClientProvider` then serializes the entire cache to MMKV on the JS thread. Only Settings → Logs reads the data.
 
-Downloading works by using FFmpeg to convert an HLS stream into a video file on your device. This lets you download and watch any content that you can stream. The conversion is handled in real time by Jellyfin on the server during the download. While this may take a bit longer, it ensures compatibility with any file your server can transcode.
+**Evidence:** at idle the JS thread uses 75–85% of a core on every screen, with zero frames drawn. A scheduler probe put about 60% of JS wall time in `persistClient` and in the `setInterval` from `onQueryUpdate`. Removing that one line took the JS thread to 1%.
 
-### 🧩 Streamyfin Plugin
+**Fix:** `utils/log.tsx`, `app/_layout.tsx`. `useLog` now owns the query, so it only polls while the Logs screen is mounted, with `gcTime: 0`. `LogProvider` is removed. The Logs screen still updates live (JS about 6% while open, 1% after leaving).
 
-The Jellyfin Plugin for Streamyfin is a plugin you install into Jellyfin that holds all settings for the client Streamyfin. This allows you to synchronize settings across all your users, like for example:
+### 2. The stored log has no size limit
 
-- Automatic Seerr login with no user input required
-- Set your preferred default languages
-- Configure download method and search provider
-- Personalize your home screen
-- And much more
+**Upstream:** no report found. `develop` still limits entries by count only.
 
-[Streamyfin Plugin](https://github.com/streamyfin/jellyfin-plugin-streamyfin)
+**Cause:** `MAX_LOG_ENTRIES` limits the number of entries, not their size, and `storeLogEntry` parses and rewrites the whole log for every new entry. A log that rarely reaches 250 entries can keep old, oversized entries for months.
 
-### 📡 Chromecast
+**Evidence:** the test install's log held 115 entries totalling 26.8 MB, the oldest three months old. 17 `Jellyseerr response error` entries from an older build accounted for essentially all of it, at up to 2 MB each. Current code truncates Seerr bodies (`hooks/useSeerr.ts`), so this is about stale data and the missing general limit. How often it happens to other users is unknown.
 
-Chromecast support is currently under development. Video casting is already available, and we're actively working on adding subtitle support and additional features.
+**Fix:** `constants/Logs.ts`, `utils/logStorage.ts`, `utils/migrations.ts`. Entries are capped at 8 KB per field, and migration 5 shrinks existing logs. Builds with the #1 fix alone used about 730 MB at idle, against about 580 MB once this and #3 were in. Cold start reached about 1.7 s only with these too, though it wasn't measured separately for each fix.
 
-### 🎬 MPV Player
+### 3. The log is part of the persisted query cache
 
-Streamyfin uses [MPV](https://mpv.io/) as its primary video player on all platforms, powered by [MPVKit](https://github.com/mpvkit/MPVKit). MPV is a powerful, open-source media player known for its wide format support and high-quality playback.
-Thanks to [@Alexk2309](https://github.com/Alexk2309) for the hard work building the native MPV module in Streamyfin.
+**Upstream:** no report found.
 
-### 🔍 Jellysearch
+**Cause:** the log has its own MMKV key but was also dehydrated as the `["logs"]` query, so it was stored twice and written with every cache save.
 
-[Jellysearch](https://gitlab.com/DomiStyle/jellysearch) works with Streamyfin
+**Evidence:** `["logs"]` was 26.79 MB of a 27.97 MB persisted cache across 106 queries. `JSON.stringify` alone took 190–490 ms per save, and persist work reached about 700 ms per 5 s window on the JS thread during navigation. Without the log, the cache is about 1.2 MB.
 
-> A fast full-text search proxy for Jellyfin. Integrates seamlessly with most Jellyfin clients.
+**Fix:** `utils/queryPersistence.ts` excludes the key by name, because a restored entry carries the default `gcTime`.
 
-## 🛣️ Roadmap
+### 4. "System" subtitle font resolves to an arbitrary system font
 
-Check out our [Roadmap](https://github.com/orgs/streamyfin/projects/3/views/1) to see what we're working on next, we are always open to feedback and suggestions. Please let us know if you have any ideas or feature requests.
+**Upstream:** no report of this symptom found. The mapping comes from merged [#2019](https://github.com/streamyfin/streamyfin/pull/2019) and is still on `develop`. [#2137](https://github.com/streamyfin/streamyfin/issues/2137) (broken Vietnamese subtitles on Android, closed) might be related; not tested.
 
-## 📥 Download Streamyfin
+**Cause:** "System" maps to `sub-font=sans-serif`. libass runs without a fontconfig config on Android ("No usable fontconfig configuration file found, using fallback"), so nothing aliases `sans-serif` to a real family.
 
-<div style="display: flex; gap: 5px;">
-  <a href="https://apps.apple.com/app/streamyfin/id6593660679?l=en-GB"><img height=50 alt="Get Streamyfin on App Store" src="./assets/Download_on_the_App_Store_Badge.png"/></a>
-  <a href="https://play.google.com/store/apps/details?id=com.fredrikburmester.streamyfin"><img height=50 alt="Get Streamyfin on Google Play Store" src="./assets/Google_Play_Store_badge_EN.svg"/></a>
-  <a href="https://github.com/streamyfin/streamyfin/releases/latest"><img height=50 alt="Get Streamyfin on Github" src="./assets/Download_on_Github_.png"/></a>
-  <a href="https://apps.obtainium.imranr.dev/redirect.html?r=obtainium://add/https://github.com/streamyfin/streamyfin"><img height=50 alt="Add Streamyfin to Obtainium" src="./assets/Download_with_Obtainium.png"/></a>
-</div>
+**Evidence:** the mpv log shows `fontselect: (sans-serif, 400, 0) -> /system/fonts/MiClockTibetan-Thin.ttf`. Subtitles rendered squashed with no visible spaces ("Erwirdsichervielesrichtigmalen").
 
-### 🧪 Beta Testing
+**Fix:** `MPVLayerRenderer.kt` maps "System" to `Roboto`, confirmed correct by screenshots. Only Latin text was tested, so check other scripts before proposing this upstream, and consider devices without Roboto.
 
-To access the Streamyfin beta, you need to subscribe to the Member tier (or higher) on [Patreon](https://www.patreon.com/streamyfin). This grants you immediate access to the ⁠🧪-beta-releases channel on Discord and lets me know you’ve subscribed. This is where I share APKs and IPAs. It does not provide automatic TestFlight access, so please send me a DM (Cagemaster) with the email you use for Apple so we can add you manually.
+### 5. Hero carousel redraws a live blur and decodes backdrops at full size
 
-**Note**: Anyone actively contributing to Streamyfin’s source code will receive automatic access to beta releases.
+**Upstream:** no report found. Both are still on `develop`. The carousel came from merged [#1983](https://github.com/streamyfin/streamyfin/pull/1983).
 
-## 🚀 Getting Started
+**Cause:** the Android glass panel draws a second copy of the card art through `Modifier.blur(24.dp)`, a shader on an offscreen layer. `HeroImageLoader` also decodes every image at server size with no downsampling.
 
-### ⚙️ Prerequisites
+**Evidence:** carousel median frame went from 27 ms to 13–15 ms, and janky frames from 78% to 7–23%, before #12 improved them further. The two changes were tested together, so their individual effects are unknown.
 
-- Your device is on the same network as the Jellyfin server (for local connections)  
-- Your Jellyfin server is up and running with remote access enabled if you plan to connect from outside your local network  
-- Your server version is up to date (older versions may cause compatibility issues)  
-- You have a valid Jellyfin user account with access to the media libraries you want to view  
-- If using features such as **downloads** or **Seerr integration**, confirm the required plugins are installed and configured on your Jellyfin server
+**Fix:** `HeroCarouselContent.kt`, `HeroImageLoader.kt`. Images decode at no more than twice the screen width. The panel draws a 64 px copy scaled up, prepared once. It looks slightly blockier than a true blur, but reads as frosted glass, and now also works below Android 12.
 
-## 🙌 Contributing
-
-We welcome contributions that improve Streamyfin. Start by forking the repository and submitting a pull request. For major changes or new features, please open an issue first to discuss your ideas and ensure alignment with the project.
-
-## 🌍 Translations
-
-[![Crowdin Translation Status](https://badges.crowdin.net/streamyfin/localized.svg)](https://crowdin.com/project/streamyfin)
-
-Streamyfin is available in multiple languages, and we’re always looking for contributors to help make the app accessible worldwide.  
-You can contribute translations directly on our [Crowdin project page](https://crowdin.com/project/streamyfin).
-
-### 👨‍💻 Development Info
-
-1. Use node `>20`
-2. Install dependencies `bun i`
-3. Make sure you have xcode and/or android studio installed. (follow the guides for expo: https://docs.expo.dev/workflow/android-studio-emulator/)
-   - If iOS builds fail with `missing Metal Toolchain` (KSPlayer shaders), run `bun run ios:install-metal-toolchain` once
-4. Install BiomeJS extension in VSCode/Your IDE (https://biomejs.dev/)
-5. Run `bun run prebuild`
-6. Create an expo dev build by running `bun run ios` or `bun run android`. This will open a simulator on your computer and run the app
-
-The project uses bun exclusively: `npm`, `yarn` and `npx` are not supported.
-
-For the TV version suffix the commands with `:tv`.
-
-`bun run prebuild:tv`  
-`bun run ios:tv`  
-`bun run android:tv`
-
-Before opening a pull request, read [CONTRIBUTING.md](./CONTRIBUTING.md) and run `bun run test`.
-
-TV platform integration notes:
-
-- [TV Discovery](./docs/tv-discovery.md)
-
-## 👋 Get in Touch with Us
-
-Need assistance or have any questions?
-
-- **Discord:** [Join our server](https://discord.gg/BuGG9ZNhaE)
-- **GitHub Issues:** [Report bugs or request features](https://github.com/streamyfin/streamyfin/issues)  
-- **Email:** [developer@streamyfin.app](mailto:developer@streamyfin.app)  
-
-
-## ❓ FAQ
-
-1. Q: Why can't I see my libraries in Streamyfin?  
-   A: Make sure your server is running one of the latest versions and that you have at least one library that isn't audio only
-2. Q: Why can't I see my music library?
-   A: We don't currently support music and are unlikely to support music in the near future
-
-## 📝 Credits
-
-Streamyfin is developed by [Fredrik Burmester](https://github.com/fredrikburmester) and is not affiliated with Jellyfin. The app is built using Expo, React Native, and other open-source libraries.
-
-## 🎖️ Core Developers
-
-Thanks to the following contributors for their significant contributions:
-
-<div align="left">
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/Alexk2309">
-        <img src="https://github.com/Alexk2309.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@Alexk2309</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/herrrta">
-        <img src="https://github.com/herrrta.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@herrrta</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/lostb1t">
-        <img src="https://github.com/lostb1t.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@lostb1t</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/Simon-Eklundh">
-        <img src="https://github.com/Simon-Eklundh.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@Simon-Eklundh</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/topiga">
-        <img src="https://github.com/topiga.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@topiga</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/lancechant">
-        <img src="https://github.com/lancechant.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@lancechant</b></sub>
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/simoncaron">
-        <img src="https://github.com/simoncaron.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@simoncaron</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/jakequade">
-        <img src="https://github.com/jakequade.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@jakequade</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/Ryan0204">
-        <img src="https://github.com/Ryan0204.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@Ryan0204</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/retardgerman">
-        <img src="https://github.com/retardgerman.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@retardgerman</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/whoopsi-daisy">
-        <img src="https://github.com/whoopsi-daisy.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@whoopsi-daisy</b></sub>
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/Gauvino">
-        <img src="https://github.com/Gauvino.png?size=55" width="55" style="border-radius: 50%;" />
-        <br /><sub><b>@Gauvino</b></sub>
-      </a>
-    </td>
-  </tr>
-</table>
-</div>
-
-## ✨ Acknowledgements
-
-We would like to thank the Jellyfin team for their excellent software and support on Discord.
-
-Special thanks to the official Jellyfin clients, which have served as an inspiration for Streamyfin.
-
-We also thank all other developers who have contributed to Streamyfin, your efforts are greatly appreciated.
-
-A special mention to the following people and projects for their contributions:
-
-- [@Alexk2309](https://github.com/Alexk2309) for building the native MPV module that integrates [MPVKit](https://github.com/mpvkit/MPVKit) with React Native
-- [Reiverr](https://github.com/aleksilassila/reiverr) for invaluable help with understanding the Jellyfin API
-- [Jellyfin TS SDK](https://github.com/jellyfin/jellyfin-sdk-typescript) for providing the TypeScript SDK
-- [Seerr](https://github.com/seerr-team/seerr) for enabling API integration with their project
-
-
-## ⭐ Star History
-
-[![Star History Chart](https://star-history.dera.page/svg?repos=streamyfin/streamyfin&type=Date)](https://star-history.dera.page/#streamyfin/streamyfin&Date)
-
-## 📄 License
-
-Streamyfin is licensed under the Mozilla Public License 2.0 (MPL-2.0).
-This means you are free to use, modify, and distribute this software. The MPL-2.0 is a copyleft license that allows for more flexibility in combining the software with proprietary code.
-Key points of the MPL-2.0:
-
-- You can use the software for any purpose
-- You can modify the software and distribute modified versions
-- You must include the original copyright and license notices
-- You must disclose your source code for any modifications to the covered files
-- Larger works may combine MPL code with code under other licenses
-- MPL-licensed components must remain under the MPL, but the larger work can be under a different license
-- For the full text of the license, please see the LICENSE file in this repository
-
-## ⚠️ Disclaimer
-Streamyfin does not promote, support, or condone piracy in any form. The app is intended solely for streaming media that you personally own and control. It does not provide or include any media content. Any discussions, support requests, or references to piracy, as well as any tools, software, or websites related to piracy, are strictly prohibited across all our channels.
-
-## 🤝 Sponsorship
-VPS hosting generously provided by [Hexabyte](https://hexabyte.se/en/vps/?currency=eur) and [SweHosting](https://swehosting.se/en/#tj%C3%A4nster)
+### 6. Unpinned Cast framework breaks clean builds
+
+**Upstream:** already fixed by merged [#2295](https://github.com/streamyfin/streamyfin/pull/2295), newer than v0.55.2. No new issue needed.
+
+**Cause:** the Cast plugin defaults to version `+`, which now pulls `mediarouter:1.9.0-beta01`, needing AGP 9.1 and compileSdk 37.
+
+**Fix:** `app.config.ts` pins 22.3.1, the same as #2295 and the official APK.
+
+### 10. The MMKV file never shrinks after large values are gone
+
+**Upstream:** no report found. No `trim` on `develop`.
+
+**Cause:** MMKV keeps its whole file mapped in memory and doesn't shrink by itself. Rewriting a 28 MB value every second had grown it.
+
+**Evidence:** `Other mmap` in `dumpsys meminfo` went from about 205 MB to about 4 MB after one `trim()`, and total memory from 746 MB to about 520 MB. Login and settings survived.
+
+**Fix:** `utils/migrations.ts`, migration 6, once. Only helps installs that were hit by #1 and #2. Whether the file grows back over months wasn't tested.
+
+### 11. Release builds aren't shrunk with R8
+
+**Upstream:** open [#2368](https://github.com/streamyfin/streamyfin/pull/2368) does this, ahead of Expo SDK 58 enabling it by default. No new issue needed.
+
+**Evidence:** dex went from 85 MB to about 28 MB, and idle memory fell by about 70–80 MB. Scrolling and start-up were unchanged.
+
+**Fix:** `app.json`. Uses `-keepnames` for exceptions from #2368, plus broad keep rules for the native-facing modules. Those cover the `RNHeadlessAppLoader` breakage #2368 reports, but they're less precise than its rules, so upstream's rules should be preferred once merged.
+
+**Checked:** home, carousel filter, Cast picker (not connected), downloads screen, search, favorites, library, settings, logs, item page, playback with hardware decode, seek, player options.
+
+**Not checked:** an actual download, connecting to a Cast device, music, the ExoPlayer engine, background tasks, notifications. If one of those breaks, suspect this first.
+
+### 12. Sideloaded installs run uncompiled until the system gets to them
+
+**Upstream:** no report found. This is Android behaviour rather than an app bug, but it affects anyone installing an APK directly, and it may explain some "laggy on Android" reports. Not confirmed.
+
+**Cause:** `adb install` leaves the app at compile status `verify`, running on the interpreter and JIT until background dexopt, which waits for the phone to be idle and charging. Store installs can get cloud profiles.
+
+**Evidence, same build:**
+
+| State | Cold start | Grid median / jank | Home median | Idle memory |
+|---|---|---|---|---|
+| `verify` | 1.7–1.9 s | 17 ms / 56–68% | 12–17 ms | 594 MB |
+| `speed-profile` | 1.45 s | 12 ms / 14–21% | 15–16 ms | 633 MB |
+| `speed` | 1.6–1.7 s | 11–12 ms / 2–26% | 13 ms | 707 MB |
+
+Measured before #10 and #11, in one run per state, so the memory figures are only comparable with each other.
+
+**Fix:** none in the app. After every install, run `adb shell cmd package compile -m speed -f com.fredrikburmester.streamyfin`. Whether the system later downgrades `speed` wasn't tested. Check with `adb shell dumpsys package dexopt`.
+
+## Not fixed
+
+### 7. Scrolling misses the 120 Hz budget
+
+**Upstream:** old closed [#91](https://github.com/streamyfin/streamyfin/issues/91) (library scrolling). Open [#379](https://github.com/streamyfin/streamyfin/issues/379) may overlap. Merged [#2296](https://github.com/streamyfin/streamyfin/pull/2296) and open [#2378](https://github.com/streamyfin/streamyfin/pull/2378) are newer image and card work, neither tested here.
+
+**Evidence:** with `speed` compilation (#12), the library grid's median frame is 11–12 ms and often close to smooth, against an 8.3 ms budget. Home is 13–16 ms and varies a lot between runs, about the same as official (14 ms, 38% janky in one uncompiled run), so these fixes didn't clearly improve it. Native Settings measures 5 ms with 0.4% jank, though it's a far simpler screen. Roughly 100 frames per second are still delivered, so this is mild rather than severe.
+
+The render thread dominates, and time is spread across general Skia drawing with no single hot spot (`GrDrawingManager::flush` about 30%, `eglSwapBuffers` about 17%).
+
+**Ruled out:**
+- Rounding card images instead of `overflow: hidden`: no difference in an A/B/A/B test.
+- The JS changes: official JS on the same native build scrolls the same in an A/B/A/B test.
+- Heat: battery about 25 °C, thermal status 0, full clocks.
+
+### 8. The main thread wakes on every frame while idle
+
+**Upstream:** no report found.
+
+**Evidence:** about 123 wake-ups per second with nothing drawn, using 20–35% of one core (about 3–4% of total CPU), and stopping in the background. Most is React Native's own `FabricUIManager$DispatchUIFrameCallback`, which re-schedules itself every frame while resumed, so it's upstream RN behaviour. About a sixth is `worklets` `AnimationFrameQueue`, which is unidentified: a probe on the UI runtime's `requestAnimationFrame` recorded no calls.
+
+### 9. Push token fails on every launch
+
+**Upstream:** no report of `FIS_AUTH_ERROR` found.
+
+**Evidence:** on builds re-signed with a non-official key, `getExpoPushTokenAsync` fails with `FIS_AUTH_ERROR`. It was logged three times per launch, because it runs again on every session change.
+
+**Partial fix:** `app/_layout.tsx` asks once per launch. The failure itself remains.
+
+**Likely cause, unconfirmed:** the bundled Firebase config rejects re-signed builds. If so, push notifications can't work with a non-official signing key without a separate Firebase project. Whether official-signed builds fail too wasn't tested.
+
+### 13. App version shows `#[object Object]` on local builds
+
+**Upstream:** not searched. Cosmetic. Settings shows `0.55.2 · <commit> · #[object Object]`, so `extra.build.runNumber` isn't a string on these builds. Cause not investigated, and not checked on non-R8 builds.
+
+## Checked, not bugs
+
+- **Software video decoding:** one playback used `av:h264` threads while screen recording was running. Without recording, hardware decoding was used (`MediaCodec_loop`). Probably caused by the test. Open [#1853](https://github.com/streamyfin/streamyfin/issues/1853) reports hardware decode failing on another device, but no link was established.
+- **Possibly related, not investigated:** open [#1302](https://github.com/streamyfin/streamyfin/issues/1302) and [#1089](https://github.com/streamyfin/streamyfin/issues/1089) report lag after downloading media. No downloads were tested here.
+
+## Building
+
+You need your own signing key. Android won't install this over an official Streamyfin APK signed with a different key unless you uninstall first, which deletes the app's data. The package name is unchanged, so it can't sit alongside an official install. `versionCode` is 161, so it can replace an official 0.55.2 (160) signed with the same key.
+
+```powershell
+bun install --frozen-lockfile --ignore-scripts
+$env:JAVA_HOME = "<JDK 17>"; $env:EXPO_TV = "0"; $env:NODE_ENV = "production"; $env:SENTRY_DISABLE_AUTO_UPLOAD = "true"
+node_modules\.bin\expo.exe prebuild --platform android --clean --no-install
+cd android; .\gradlew.bat assembleRelease -PreactNativeArchitectures=arm64-v8a
+apksigner sign --ks <keystore> --out <out.apk> app\build\outputs\apk\release\app-release.apk
+adb install -r <out.apk>
+adb shell cmd package compile -m speed -f com.fredrikburmester.streamyfin
+```
+
+The compile step matters (#12). Skip it and scrolling is noticeably worse until the system compiles the app.
+
+When moving to a newer upstream version, raise `versionCode` in `app.json` above the official release's, and drop the Cast pin if the base already includes #2295.
+
+Tests run: `jest utils/logStorage.test.ts utils/log.test.ts utils/migrations utils/queryPersistence.test.ts utils/atoms/settings.test.ts` (all pass on their last runs). The full test suite and the Kotlin unit tests were not run; `SubtitleFontTest` was updated but not executed.
+
+GitHub Actions is disabled on this fork, so upstream's workflows don't run here.
