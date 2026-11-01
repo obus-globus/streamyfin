@@ -44,6 +44,7 @@
         "backgroundColor": "#2E2E2E"
       },
       "package": "com.fredrikburmester.streamyfin",
+      "versionCode": 161,
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",

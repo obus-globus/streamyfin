@@ -52,7 +52,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
     config.plugins?.push([
       "react-native-google-cast",
-      { useDefaultExpandedMediaControls: true },
+      {
+        useDefaultExpandedMediaControls: true,
+        // The plugin defaults to "+", and the newest release now pulls in a
+        // mediarouter beta that needs AGP 9.1 and compileSdk 37.
+        androidPlayServicesCastFrameworkVersion: "22.3.1",
+      },
     ]);
 
     config.plugins?.push([
