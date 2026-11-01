@@ -1,6 +1,11 @@
 import { LOGS_STORAGE_KEY } from "@/constants/Logs";
 import { clearMmkv } from "@/test-utils/mmkv";
-import { readFromLog, redactStoredLog, storeLogEntry } from "./logStorage";
+import {
+  capStoredLog,
+  readFromLog,
+  redactStoredLog,
+  storeLogEntry,
+} from "./logStorage";
 import { storage } from "./mmkv";
 
 // The storage half of the app log, on the real module with an in-memory MMKV.
@@ -13,6 +18,42 @@ const TOKEN = "0123456789abcdef0123456789abcdef";
 
 beforeEach(() => {
   clearMmkv();
+});
+
+describe("log entry size limit", () => {
+  const HUGE = "x".repeat(2_000_000);
+
+  test("storeLogEntry truncates an oversized message and data", () => {
+    storeLogEntry("ERROR", HUGE, { body: HUGE });
+
+    const stored = storage.getString(LOGS_STORAGE_KEY) ?? "";
+    expect(stored.length).toBeLessThan(20_000);
+    expect(readFromLog()[0].message).toContain("[truncated from");
+    expect(readFromLog()[0].data).toContain("[truncated from");
+  });
+
+  test("storeLogEntry leaves ordinary data structured", () => {
+    storeLogEntry("INFO", "message", { status: 500 });
+
+    expect(readFromLog()[0].data).toEqual({ status: 500 });
+  });
+
+  test("capStoredLog shrinks old entries and keeps small ones intact", () => {
+    const capped = capStoredLog(
+      JSON.stringify([
+        { timestamp: "t1", level: "ERROR", message: "big", data: { body: HUGE } },
+        { timestamp: "t2", level: "INFO", message: "small", data: { a: 1 } },
+      ]),
+    );
+
+    expect(capped?.length).toBeLessThan(20_000);
+    expect(JSON.parse(capped ?? "")[1].data).toEqual({ a: 1 });
+  });
+
+  test("capStoredLog rejects a blob that isn't a log", () => {
+    expect(capStoredLog("{not json")).toBeUndefined();
+    expect(capStoredLog('{"a":1}')).toBeUndefined();
+  });
 });
 
 describe("storeLogEntry", () => {

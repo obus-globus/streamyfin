@@ -6,7 +6,7 @@ import {
   SEERR_USER_STORAGE_KEY,
 } from "@/constants/Seerr";
 import { writeErrorLog, writeInfoLog } from "@/utils/log";
-import { redactStoredLog } from "@/utils/logStorage";
+import { capStoredLog, redactStoredLog } from "@/utils/logStorage";
 import { storage } from "@/utils/mmkv";
 
 /**
@@ -87,6 +87,21 @@ const MIGRATIONS: Migration[] = [
         store.remove(LOGS_STORAGE_KEY);
       } else {
         store.set(LOGS_STORAGE_KEY, redacted);
+      }
+    },
+  },
+  {
+    version: 5,
+    description:
+      "cap the size of stored log entries, where whole response bodies had grown the log to tens of megabytes",
+    run: (store) => {
+      const stored = store.getString(LOGS_STORAGE_KEY);
+      if (stored === undefined) return;
+      const capped = capStoredLog(stored);
+      if (capped === undefined) {
+        store.remove(LOGS_STORAGE_KEY);
+      } else {
+        store.set(LOGS_STORAGE_KEY, capped);
       }
     },
   },

@@ -1,4 +1,8 @@
-import { LOGS_STORAGE_KEY, MAX_LOG_ENTRIES } from "@/constants/Logs";
+import {
+  LOGS_STORAGE_KEY,
+  MAX_LOG_ENTRIES,
+  MAX_LOG_ENTRY_CHARS,
+} from "@/constants/Logs";
 import { storage } from "./mmkv";
 import { redactCredentials } from "./redactCredentials";
 
@@ -37,18 +41,38 @@ const redactForLog = (value: unknown): unknown => {
   }
 };
 
+const truncateForLog = (text: string): string =>
+  text.length > MAX_LOG_ENTRY_CHARS
+    ? `${text.slice(0, MAX_LOG_ENTRY_CHARS)}… [truncated from ${text.length} characters]`
+    : text;
+
+const capLogEntry = (entry: LogEntry): LogEntry => {
+  const data = JSON.stringify(entry.data);
+  return {
+    ...entry,
+    message:
+      typeof entry.message === "string"
+        ? truncateForLog(entry.message)
+        : entry.message,
+    data:
+      data !== undefined && data.length > MAX_LOG_ENTRY_CHARS
+        ? truncateForLog(data)
+        : entry.data,
+  };
+};
+
 export const storeLogEntry = (
   level: LogLevel,
   message: string,
   data?: unknown,
 ): void => {
-  const newEntry: LogEntry = {
+  const newEntry = capLogEntry({
     timestamp: new Date().toISOString(),
     level: level,
     // Typed as a string, but catch blocks pass whatever they caught.
     message: redactForLog(message) as string,
     data: redactForLog(data),
-  };
+  });
 
   // The logging path itself must never throw: a corrupt persisted blob, or
   // one that isn't a list, falls back to an empty log instead of taking down
@@ -75,6 +99,21 @@ export const storeLogEntry = (
 export const readFromLog = (): LogEntry[] => {
   const logs = storage.getString(LOGS_STORAGE_KEY);
   return logs ? JSON.parse(logs) : [];
+};
+
+/**
+ * Caps the entries of a log stored before entries had a size limit, for the
+ * storage migration. Returns undefined when the blob isn't a readable log.
+ */
+export const capStoredLog = (stored: string): string | undefined => {
+  try {
+    const logs = JSON.parse(stored);
+    return Array.isArray(logs)
+      ? JSON.stringify(logs.map(capLogEntry))
+      : undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 /**

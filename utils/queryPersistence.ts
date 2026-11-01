@@ -3,8 +3,13 @@ import type { Persister } from "@tanstack/react-query-persist-client";
 
 /** What the query cache writes to disk. */
 export const queryDehydrateOptions: DehydrateOptions = {
+  // The log has its own storage. Named here as well as through `gcTime: 0` in
+  // useLog because an entry restored from an older cache carries the default
+  // gcTime, and can be most of what gets written.
   shouldDehydrateQuery: (query) =>
-    query.state.status === "success" && query.options.gcTime !== 0,
+    query.state.status === "success" &&
+    query.options.gcTime !== 0 &&
+    query.queryKey[0] !== "logs",
   // TanStack persists paused mutations by default, the ones started while
   // offline. A restored mutation only gets its mutationFn back from
   // setMutationDefaults, which the app never calls, so resuming one after a
